@@ -12,15 +12,15 @@ data Type
   ;
 
 // the type environment consisting of defined questions in the form 
-alias TEnv = rel[loc def, loc ddef, str name, str label, Type \type];
+alias TEnv = rel[loc def, str name, str label, Type \type];
 
 // To avoid recursively traversing the form, use the `visit` construct
 // or deep match (e.g., `for (/question(...) := f) {...}` ) 
 TEnv collect(AForm f) {
   TEnv tenvs = {};
   visit(f) {
-    case qst:normal(str label, AId identifier, AType \type): tenvs += <qst.src, identifier.src, identifier.name, label, getType(\type)>;
-    case qst:comp(str label, AId identifier, AType \type, AExpr _): tenvs += <qst.src, identifier.src, identifier.name, label, getType(\type)>;
+    case normal(str label, AId identifier, AType \type): tenvs += <identifier.src, identifier.name, label, getType(\type)>;
+    case comp(str label, AId identifier, AType \type, AExpr _): tenvs += <identifier.src, identifier.name, label, getType(\type)>;
   }
   return tenvs; 
 }
@@ -43,10 +43,10 @@ set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   rel[str n, Type t] seenNameType = {};
   set[str] seenLabels = {};
   
-  for (<loc def, loc ddef, str name, str label, Type \type> <- tenv) {
+  for (<loc def, str name, str label, Type \type> <- tenv) {
   	if(name in seenNameType<0>) {
   	  if(<name,\type> notin seenNameType) {
-  	    msgs += { error("Duplicate question name but with different type", ddef) };
+  	    msgs += { error("Duplicate question name but with different type", def) };
   	  }
   	} else {
   	  seenNameType += {<name,\type>};
@@ -154,7 +154,7 @@ set[Message] check(AExpr e, TEnv tenv, UseDef useDef) {
 Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
   switch (e) {
     case ref(id(_, src = loc u)):
-      if (<u, loc d> <- useDef, <_, d, _, _, Type t> <- tenv) {
+      if (<u, loc d> <- useDef, <d, _, _, Type t> <- tenv) {
         return t;
       }
     case strLit(str _): return tstr();

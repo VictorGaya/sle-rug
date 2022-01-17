@@ -84,16 +84,22 @@ VEnv eval(AQuestion q, Input inp, VEnv venv) {
         venv = eval(qu,inp,venv);
       }
     }
-    case ifThenElse(AExpr guard, AQuestion thenQ, AQuestion elseQ): {
+    case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
       if(eval(guard,venv).b) {
-        venv = eval(thenQ,inp,venv);
+      	for(AQuestion qu <- thenQs){
+        	venv = eval(qu,inp,venv);
+      	}
       } else {
-        venv = eval(elseQ,inp,venv);
+        for(AQuestion qu <- elseQs){
+        	venv = eval(qu,inp,venv);
+      	}
       }
     }
-    case ifThen(AExpr guard, AQuestion thenQ): {
+    case ifThen(AExpr guard, list[AQuestion] thenQs): {
       if(eval(guard,venv).b) {
-        venv = eval(thenQ,inp,venv);
+        for(AQuestion qu <- thenQs){
+        	venv = eval(qu,inp,venv);
+      	}
       }
     }
   }
