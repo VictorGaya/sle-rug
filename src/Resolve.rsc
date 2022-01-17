@@ -26,10 +26,16 @@ RefGraph resolve(AForm f) = <us, ds, us o ds>
   when Use us := uses(f), Def ds := defs(f);
 
 Use uses(AForm f) {
-  return { <t.src,t.name> | /AType t := f }
-    + { <v.src,identifier.name> | /v:ref(AId identifier) := f }; 
+  Use uses = {};
+  for (/AExpr expr := f) {
+    uses += {<identifier.src, identifier.name> | /AId identifier := expr};
+  }
+  return uses; 
 }
 
 Def defs(AForm f) {
-  return { <q.name,q.src> | /AQuestion q := f }; 
+  Def defs = {};
+  defs += {<identifier.name, identifier.src> | /normal(str _, AId identifier, AType _) := f};
+  defs += {<identifier.name, identifier.src> | /comp(str _, AId identifier, AType _, AExpr _) := f};
+  return defs;
 }

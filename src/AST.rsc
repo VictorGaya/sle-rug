@@ -12,11 +12,11 @@ data AForm(loc src = |tmp:///|)
   ; 
 
 data AQuestion(loc src = |tmp:///|)
-  = normal(str name, AId identifier, AType typ)
-  | comp(str name, AId identifier, AType typ, AExpr expr)
+  = normal(str label, AId identifier, AType \type)
+  | comp(str label, AId identifier, AType \type, AExpr expr)
   | block(list[AQuestion] questions)
-  | ifThenElse(AId identifier, AQuestion thenQ, AQuestion elseQ)
-  | ifThen(AId identifier, AQuestion thenQ)
+  | ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs)
+  | ifThen(AExpr guard, list[AQuestion] thenQs)
   ; 
 
 data AExpr(loc src = |tmp:///|)
@@ -43,5 +43,7 @@ data AId(loc src = |tmp:///|)
   = id(str name);
 
 data AType(loc src = |tmp:///|)
-  = string(str qType)
+  = intType()
+  | strType()
+  | boolType()
   ;

@@ -12,11 +12,11 @@ start syntax Form
 
 // TODO: question, computed question, block, if-then-else, if-then
 syntax Question
-  = normal: Str Id ":" Type              					// question
-  | computed: Str Id ":" Type "=" Expr      					// computed question
-  | block: "{" Question* "}" 			   					// block
-  | ifThenElse: "if" "(" Id ")" Question "else" Question		// if-then-else
-  | ifThen: "if" "(" Id ")"  Question						// if-then
+  = normal: Str Id ":" Type
+  | computed: Str Id ":" Type "=" Expr
+  | block: "{" Question* "}"
+  | ifThenElse: "if" "(" Expr ")" "{" Question* "}" "else" "{" Question* "}"
+  | ifThen: "if" "(" Expr ")" "{" Question* "}"
   ; 
 
 // TODO: +, -, *, /, &&, ||, !, >, <, <=, >=, ==, !=, literals (bool, int, str)
@@ -24,34 +24,31 @@ syntax Question
 // and use C/Java style precedence rules (look it up on the internet)
 syntax Expr 
   = ref: Id \ "true" \ "false" // true/false are reserved keywords.
-  | strLit: [A-Za-z][A-Za-z0_9]*
+  | strLit: Str
   | boolLit: Bool
   | intLit: Int
   > bracket "(" Expr ")"
   > right not: "!" Expr
-  > left multi: Expr "*" Expr
-  | left div: Expr "/" Expr
-  > right add: Expr "+" Expr
-  | right sub: Expr "-" Expr
-  > left gr: Expr "\>" Expr
-  | left less: Expr "\<" Expr
-  | left leq: Expr "\<=" Expr
-  | left geq: Expr "\>=" Expr
-  > left eq: Expr "==" Expr
-  | left neq: Expr "!=" Expr
-  > left and: Expr "&&" Expr
-  | left or: Expr "||" Expr
+  > left Expr ("*" | "/") Expr
+  > right Expr ("+" | "-") Expr
+  > left Expr ("\>" | "\<" | "\>=" | "\<=") Expr
+  > left Expr ("==" | "!=") Expr
+  > left Expr ("&&" | "||") Expr
   ;
-  
+
 syntax Type
-  = string: "boolean" or "string" or "integer" 
+  = intType: "integer"
+  | stringType: "string"
+  | boolType: "boolean"
   ;  
   
-lexical Str = [ \"] >> [A-Za-z0-9_\ ]+ >> [ \"];
+lexical Str = [\"] [A-Za-z0-9_\ ?():]+ [\"];
 
-lexical Int = [0-9]+;
+lexical Int 
+  = [0]
+  | [0-9]+;
 
-lexical Bool = [true | false];
+lexical Bool = "true" | "false";
 
 
 
