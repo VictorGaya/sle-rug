@@ -24,7 +24,48 @@ void compile(AForm f) {
 }
 
 HTML5Node form2html(AForm f) {
-  return html();
+  return html("
+  	'\<!DOCTYPE html\>
+  	'\<html\>
+  	'\<head\>
+  	'\</head\>
+  	'\<body\>
+  	'\<script src=\"<f.src[extension="js"].top>\"\>\<\\script\>
+  	'\<form\>
+  	'<displayQ(f)>
+  	'\</form\>
+  	'\</body\>
+  	'\</html\>
+  ");
+}
+
+str displayQ(AForm f) {
+  newStr = "";
+  visit(f) {
+    case normal(str label, AId identifier, AType \type): {
+	  newStr += "  \<label\><label>\</label\>\<br\>\n";
+	  newStr += "  \<input type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
+	}
+	case comp(str label, AId identifier, AType \type, AExpr e): {
+	  newStr += "  \<label\><label>\</label\>\<br\>\n";
+	  newStr += "  \<input disabled type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
+	}
+	case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
+	  newStr += "";
+	}
+	case ifThen(AExpr guard, list[AQuestion] thenQs): {
+	  newStr += "";
+	}
+  }
+  return "";
+}
+
+str type2HTMLType(AType \type) {
+  switch (\type) {
+	case intType(): return "number";
+  	case boolType(): return "checkbox";
+  	case strType(): return "text";
+  }
 }
 
 str form2js(AForm f) {
