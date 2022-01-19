@@ -31,30 +31,47 @@ HTML5Node form2html(AForm f) {
   	'\</head\>
   	'\<body\>
   	'\<script src=\"<f.src[extension="js"].top>\"\>\<\\script\>
-  	'\<form\>
-  	'<displayQ(f)>
+  	'\<p\><f.name>\</p\>\<br\>
+  	'\<form\"\>
+  	'<displayForm(f)>
   	'\</form\>
   	'\</body\>
   	'\</html\>
-  ");
+  '");
 }
 
-str displayQ(AForm f) {
+str displayForm(<str name, list[AQuestion] questions>){
+	displayQs(questions);
+}
+
+str displayQs(list[AQuestion] qs) {
+  
   newStr = "";
-  visit(f) {
-    case normal(str label, AId identifier, AType \type): {
-	  newStr += "  \<label\><label>\</label\>\<br\>\n";
-	  newStr += "  \<input type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
-	}
-	case comp(str label, AId identifier, AType \type, AExpr e): {
-	  newStr += "  \<label\><label>\</label\>\<br\>\n";
-	  newStr += "  \<input disabled type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
-	}
-	case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
-	  newStr += "";
-	}
-	case ifThen(AExpr guard, list[AQuestion] thenQs): {
-	  newStr += "";
+  for (AQuestion q <- qs) {
+    switch (q) {
+      case normal(str label, AId identifier, AType \type): {
+	    newStr += "\<label\><label>\</label\>\<br\>
+	    		  '\<input type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
+	  }
+	  case comp(str label, AId identifier, AType \type, AExpr e): {
+	    newStr += "  \<label\><label>\</label\>\<br\>
+	              '\<p\>\</p\>";
+	  }
+	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
+	    newStr += "\<div id=<thenQs.src> display=\"none\"\>
+	    		  '<displayQs(thenQs)>
+	    		  '\</div\>
+	    		  '\<div id=<elseQs.src> display=\"none\"\>
+	    		  '<displayQs(thenQs)>
+	    		  '\</div\>
+	    		  '";
+	  }
+	  case ifThen(AExpr guard, list[AQuestion] thenQs): {
+	    newStr += "\<div id=<thenQs.src> display=\"none\"\>
+	    		  '<displayQs(thenQs)>
+	    		  '\</div\>
+	    		  '";
+	  }
 	}
   }
   return "";
@@ -65,9 +82,87 @@ str type2HTMLType(AType \type) {
 	case intType(): return "number";
   	case boolType(): return "checkbox";
   	case strType(): return "text";
+  	default: return "";
+  }
+  return "";
+}
+
+str type2Val(AType \type) {
+  switch (\type) {
+	case intType(): return "valueAsNumber";
+  	case boolType(): return "checked";
+  	case strType(): return "text";
+  	default: return "";
+  }
+  return "";
+}
+
+str evalForm(<str name, list[AQuestion] questions>){
+  someStr = "
+  			'<onChanges(questions)>
+  			'
+  			'function reCalcQs() {
+  			'<setValues(questions)>
+  			'} 
+  			'";
+  return someStr;
+}
+
+str setValues(list[AQuestion] qs) {
+  for (AQuestion q <- qs) {
+    switch (q) {
+      case normal(str label, AId identifier, AType \type): {
+	    someStr += "document.getElementById(<guard.src>).value = 
+	    		   'document.getElementById(<guard.src>).<type2Val(\type)>;";
+	  }
+	  case comp(str label, AId identifier, AType \type, AExpr e): {
+	    someStr += "document.getElementById(<guard.src>).onchange = reCalcQs();";
+	  }
+	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
+	    someStr += evalQs(thenQs);
+	    someStr += evalQs(elseQs);
+	  }
+	  case ifThen(AExpr guard, list[AQuestion] thenQs): {
+	    someStr += evalQs(thenQs);
+	  }
+	}
+  }
+  return someStr;
+}
+
+str type2Def(AType \type) {
+  switch(\type){
+    case intType(): return "0";
+    case boolType(): return "false";
+    case strType(): return "";
+    default: return "";
   }
 }
 
+str onChanges(list[AQuestion] qs) {
+  someStr = "";
+  for (AQuestion q <- qs) {
+    switch (q) {
+      case normal(str _, AId identifier, AType \type): {
+	    someStr += "document.getElementById(<identifier.src>).onchange = {reCalcQs()};
+	    		   'document.getElementById(<identifier.src>).value = <type2Def(\type)>\n";
+	  }
+	  case comp(str _, AId identifier, AType \type, AExpr _): {
+	    someStr += "document.getElementById(<identifier.src>).onchange = {reCalcQs()};
+	    		   'document.getElementById(<identifier.src>).value = <type2Def(\type)>\n";
+	  }
+	  case ifThenElse(AExpr _, list[AQuestion] thenQs, list[AQuestion] elseQs): {
+	    someStr += onChanges(thenQs);
+	    someStr += onChanges(elseQs);
+	  }
+	  case ifThen(AExpr _, list[AQuestion] thenQs): {
+	    someStr += onChanges(thenQs);
+	  }
+	}
+  }
+  return someStr;
+}
+
 str form2js(AForm f) {
-  return "";
+  return evalForm(f);
 }
