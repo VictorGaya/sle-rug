@@ -25,56 +25,49 @@ void compile(AForm f) {
 
 HTML5Node form2html(AForm f) {
   return html("
-  	'\<!DOCTYPE html\>
-  	'\<html\>
   	'\<head\>
   	'\</head\>
   	'\<body\>
-  	'\<script src=\"<f.src[extension="js"].top>\"\>\<\\script\>
+  	'\<script src=\"<f.src[extension="js"].top>\"\>\</script\>
   	'\<p\><f.name>\</p\>\<br\>
-  	'\<form\"\>
-  	'<displayForm(f)>
+  	'\<form\>
+  	'<displayQs(f.questions)>
   	'\</form\>
   	'\</body\>
-  	'\</html\>
   '");
-}
-
-str displayForm(<str name, list[AQuestion] questions>){
-	displayQs(questions);
 }
 
 str displayQs(list[AQuestion] qs) {
   
-  newStr = "";
+  str newStr = "";
   for (AQuestion q <- qs) {
     switch (q) {
       case normal(str label, AId identifier, AType \type): {
-	    newStr += "\<label\><label>\</label\>\<br\>
-	    		  '\<input type=\"<type2HTMLType(\type)>\" id=<identifier.src>\<br\>\n";
+	    newStr += "\t\<label\><label>\</label\>\<br\>
+	    		  '\t\<input type=\"<type2HTMLType(\type)>\" id=\"<identifier.src>\"\>\<br\>\n";
 	  }
-	  case comp(str label, AId identifier, AType \type, AExpr e): {
-	    newStr += "  \<label\><label>\</label\>\<br\>
-	              '\<p\>\</p\>";
+	  case comp(str label, AId identifier, AType _, AExpr _): {
+	    newStr += "\t\<label\><label>\</label\>\<br\>
+	              '\t\<p id=\"<identifier.src>\"\>\</p\>";
 	  }
 	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
-	    newStr += "\<div id=<thenQs.src> display=\"none\"\>
-	    		  '<displayQs(thenQs)>
-	    		  '\</div\>
-	    		  '\<div id=<elseQs.src> display=\"none\"\>
-	    		  '<displayQs(thenQs)>
-	    		  '\</div\>
+	    newStr += "\t\<div id=\"IF-<guard.src>\" style=\"display: none\"\>
+	    		  '\t<displayQs(thenQs)>
+	    		  '\t\</div\>
+	    		  '\t\<div id=\"ELSE-<guard.src>\" style=\"display: none\"\>
+	    		  '\t<displayQs(elseQs)>
+	    		  '\t\</div\>
 	    		  '";
 	  }
 	  case ifThen(AExpr guard, list[AQuestion] thenQs): {
-	    newStr += "\<div id=<thenQs.src> display=\"none\"\>
-	    		  '<displayQs(thenQs)>
-	    		  '\</div\>
+	    newStr += "\t\<div id=\"IF-<guard.src>\" style=\"display: none\"\>
+	    		  '\t<displayQs(thenQs)>
+	    		  '\t\</div\>
 	    		  '";
 	  }
 	}
   }
-  return "";
+  return newStr;
 }
 
 str type2HTMLType(AType \type) {
@@ -84,72 +77,30 @@ str type2HTMLType(AType \type) {
   	case strType(): return "text";
   	default: return "";
   }
-  return "";
 }
 
-str type2Val(AType \type) {
-  switch (\type) {
-	case intType(): return "valueAsNumber";
-  	case boolType(): return "checked";
-  	case strType(): return "text";
-  	default: return "";
-  }
-  return "";
-}
 
-str evalForm(<str name, list[AQuestion] questions>){
-  someStr = "
-  			'<onChanges(questions)>
-  			'
-  			'function reCalcQs() {
-  			'<setValues(questions)>
-  			'} 
-  			'";
-  return someStr;
-}
-
-str setValues(list[AQuestion] qs) {
-  for (AQuestion q <- qs) {
-    switch (q) {
-      case normal(str label, AId identifier, AType \type): {
-	    someStr += "document.getElementById(<guard.src>).value = 
-	    		   'document.getElementById(<guard.src>).<type2Val(\type)>;";
-	  }
-	  case comp(str label, AId identifier, AType \type, AExpr e): {
-	    someStr += "document.getElementById(<guard.src>).onchange = reCalcQs();";
-	  }
-	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
-	    someStr += evalQs(thenQs);
-	    someStr += evalQs(elseQs);
-	  }
-	  case ifThen(AExpr guard, list[AQuestion] thenQs): {
-	    someStr += evalQs(thenQs);
-	  }
-	}
-  }
-  return someStr;
-}
-
-str type2Def(AType \type) {
-  switch(\type){
-    case intType(): return "0";
-    case boolType(): return "false";
-    case strType(): return "";
-    default: return "";
-  }
+str form2js(AForm f) {
+  return "
+  		 '<onChanges(f.questions)>
+  		 '
+  		 'function reCalcQs() {
+  		 '<setValues(f.questions)>
+  		 '} 
+  		 '";
 }
 
 str onChanges(list[AQuestion] qs) {
-  someStr = "";
+  str someStr = "";
   for (AQuestion q <- qs) {
     switch (q) {
       case normal(str _, AId identifier, AType \type): {
-	    someStr += "document.getElementById(<identifier.src>).onchange = {reCalcQs()};
-	    		   'document.getElementById(<identifier.src>).value = <type2Def(\type)>\n";
+	    someStr += "document.getElementById(\"<identifier.src>\").onchange = function(){reCalcQs()};
+	    		   'document.getElementById(\"<identifier.src>\").value = <type2Def(\type)>;\n";
 	  }
 	  case comp(str _, AId identifier, AType \type, AExpr _): {
-	    someStr += "document.getElementById(<identifier.src>).onchange = {reCalcQs()};
-	    		   'document.getElementById(<identifier.src>).value = <type2Def(\type)>\n";
+	    someStr += "document.getElementById(\"<identifier.src>\").onchange = function(){reCalcQs()};
+	    		   'document.getElementById(\"<identifier.src>\").value = <type2Def(\type)>;\n";
 	  }
 	  case ifThenElse(AExpr _, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    someStr += onChanges(thenQs);
@@ -163,6 +114,73 @@ str onChanges(list[AQuestion] qs) {
   return someStr;
 }
 
-str form2js(AForm f) {
-  return evalForm(f);
+str setValues(list[AQuestion] qs) {
+  str someStr = "";
+  for (AQuestion q <- qs) {
+    switch (q) {
+      case normal(str _, AId identifier, AType \type): {
+	    someStr += "\tdocument.getElementById(\"<identifier.src>\").value = document.getElementById(\"<identifier.src>\").<type2Val(\type)>;\n";
+	  }
+	  case comp(str _, AId identifier, AType \type, AExpr e): {
+	    someStr += "\tdocument.getElementById(\"<identifier.src>\").value = <expr2Str(e, \type)>;";
+	  }
+	  case ifThenElse(AExpr guard, list[AQuestion] _, list[AQuestion] _): {
+	    someStr += "if (<expr2Str(guard, boolType())>){
+	    		   '\tdocument.getElementById(\"IF-<guard.src>\").style.display = \"\";
+	    		   '\tdocument.getElementById(\"ELSE-<guard.src>\").style.display = \"none\";
+	    		   '} else {
+	    		   '\tdocument.getElementById(\"IF-<guard.src>\").style.display = \"none\";
+	    		   '\tdocument.getElementById(\"ELSE-<guard.src>\").style.display = \"\";
+	    		   ";
+	  }
+	  case ifThen(AExpr guard, list[AQuestion] _): {
+	    someStr += "\tdocument.getElementById(\"IF-<guard.src>\").style.display = <expr2Str(guard, boolType())>?\"\":\"none\";\n";
+	  }
+	}
+  }
+  return someStr;
 }
+
+str type2Val(AType \type) {
+  switch (\type) {
+	case intType(): return "valueAsNumber";
+  	case boolType(): return "checked";
+  	case strType(): return "innerHTML";
+  	default: return "";
+  }
+}
+
+str type2Def(AType \type) {
+  switch(\type){
+    case intType(): return "0";
+    case boolType(): return "false";
+    case strType(): return "";
+    default: return "";
+  }
+}
+
+str expr2Str(AExpr e, AType \type) {
+  str someStr = "";
+  switch (e) {
+    case ref(AId id): someStr += "document.getElementById(\"<id.src>\").<type2Val(\type)>";
+    case strLit(str name): someStr += name;
+    case boolLit(bool b): someStr += "<b>";
+    case intLit(int i): someStr += "<i>";
+    case not(AExpr expr): someStr += "!(<expr2Str(expr, \type)>)";
+    case multi(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)*(<expr2Str(rhs, intType())>)";
+    case div(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)/(<expr2Str(rhs, intType())>)";
+    case add(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)+(<expr2Str(rhs, intType())>)";
+    case sub(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)-(<expr2Str(rhs, intType())>)";
+    case gr(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)\>(<expr2Str(rhs, intType())>)";
+    case less(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)\<(<expr2Str(rhs, intType())>)";
+    case leq(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)\<=(<expr2Str(rhs, intType())>)";
+    case geq(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)\>=(<expr2Str(rhs, intType())>)";
+    case eq(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)===(<expr2Str(rhs, intType())>)";
+    case neq(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, intType())>)!==(<expr2Str(rhs, intType())>)";
+    case and(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, boolType())>)&&(<expr2Str(rhs, boolType())>)";
+    case or(AExpr lhs, AExpr rhs): someStr += "(<expr2Str(lhs, boolType())>)||(<expr2Str(rhs, boolType())>)";
+    default: someStr += "";
+  }
+  return someStr;
+}
+
