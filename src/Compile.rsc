@@ -50,6 +50,9 @@ str displayQs(list[AQuestion] qs) {
 	    newStr += "\t\<label\><label>\</label\>\<br\>
 	              '\t\<p id=\"<identifier.name>\"\>\</p\>";
 	  }
+	  case block(list[AQuestion] questions): {
+	  	newStr += onChanges(questions);
+	  }
 	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    newStr += "\t\<div id=\"IF-<guard.src>\" style=\"display: none\"\>
 	    		  '\t<displayQs(thenQs)>
@@ -69,7 +72,6 @@ str displayQs(list[AQuestion] qs) {
   }
   return newStr;
 }
-
 str type2HTMLType(AType \type) {
   switch (\type) {
 	case intType(): return "number";
@@ -78,8 +80,6 @@ str type2HTMLType(AType \type) {
   	default: return "";
   }
 }
-
-
 str form2js(AForm f) {
   return "
   		 '<onChanges(f.questions)>
@@ -89,7 +89,6 @@ str form2js(AForm f) {
   		 '} 
   		 '";
 }
-
 str onChanges(list[AQuestion] qs) {
   str someStr = "";
   for (AQuestion q <- qs) {
@@ -102,6 +101,9 @@ str onChanges(list[AQuestion] qs) {
 	    someStr += "document.getElementById(\"<identifier.name>\").onchange = function(){reCalcQs()};
 	    		   'document.getElementById(\"<identifier.name>\").value = <type2Def(\type)>;\n";
 	  }
+	  case block(list[AQuestion] questions): {
+	  	someStr += onChanges(questions);
+	  }
 	  case ifThenElse(AExpr _, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    someStr += onChanges(thenQs);
 	    someStr += onChanges(elseQs);
@@ -113,7 +115,6 @@ str onChanges(list[AQuestion] qs) {
   }
   return someStr;
 }
-
 str setValues(list[AQuestion] qs) {
   str someStr = "";
   for (AQuestion q <- qs) {
@@ -123,6 +124,9 @@ str setValues(list[AQuestion] qs) {
 	  }
 	  case comp(str _, AId identifier, AType \type, AExpr e): {
 	    someStr += "\tdocument.getElementById(\"<identifier.name>\").innerHTML = <expr2Str(e, \type)>;";
+	  }
+	  case block(list[AQuestion] questions): {
+	  	someStr += onChanges(questions);
 	  }
 	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    someStr += "if (<expr2Str(guard, boolType())>){
@@ -143,7 +147,6 @@ str setValues(list[AQuestion] qs) {
   }
   return someStr;
 }
-
 str type2Val(AType \type) {
   switch (\type) {
 	case intType(): return "valueAsNumber";
@@ -152,7 +155,6 @@ str type2Val(AType \type) {
   	default: return "";
   }
 }
-
 str type2Def(AType \type) {
   switch(\type){
     case intType(): return "0";
@@ -161,7 +163,6 @@ str type2Def(AType \type) {
     default: return "";
   }
 }
-
 str expr2Str(AExpr e, AType \type) {
   str someStr = "";
   switch (e) {
@@ -186,4 +187,3 @@ str expr2Str(AExpr e, AType \type) {
   }
   return someStr;
 }
-
