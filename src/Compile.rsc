@@ -44,11 +44,11 @@ str displayQs(list[AQuestion] qs) {
     switch (q) {
       case normal(str label, AId identifier, AType \type): {
 	    newStr += "\t\<label\><label>\</label\>\<br\>
-	    		  '\t\<input type=\"<type2HTMLType(\type)>\" id=\"<identifier.src>\"\>\<br\>\n";
+	    		  '\t\<input type=\"<type2HTMLType(\type)>\" id=\"<identifier.name>\"\>\<br\>\n";
 	  }
 	  case comp(str label, AId identifier, AType _, AExpr _): {
 	    newStr += "\t\<label\><label>\</label\>\<br\>
-	              '\t\<p id=\"<identifier.src>\"\>\</p\>";
+	              '\t\<p id=\"<identifier.name>\"\>\</p\>";
 	  }
 	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    newStr += "\t\<div id=\"IF-<guard.src>\" style=\"display: none\"\>
@@ -95,12 +95,12 @@ str onChanges(list[AQuestion] qs) {
   for (AQuestion q <- qs) {
     switch (q) {
       case normal(str _, AId identifier, AType \type): {
-	    someStr += "document.getElementById(\"<identifier.src>\").onchange = function(){reCalcQs()};
-	    		   'document.getElementById(\"<identifier.src>\").value = <type2Def(\type)>;\n";
+	    someStr += "document.getElementById(\"<identifier.name>\").onchange = function(){reCalcQs()};
+	    		   'document.getElementById(\"<identifier.name>\").value = <type2Def(\type)>;\n";
 	  }
 	  case comp(str _, AId identifier, AType \type, AExpr _): {
-	    someStr += "document.getElementById(\"<identifier.src>\").onchange = function(){reCalcQs()};
-	    		   'document.getElementById(\"<identifier.src>\").value = <type2Def(\type)>;\n";
+	    someStr += "document.getElementById(\"<identifier.name>\").onchange = function(){reCalcQs()};
+	    		   'document.getElementById(\"<identifier.name>\").value = <type2Def(\type)>;\n";
 	  }
 	  case ifThenElse(AExpr _, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    someStr += onChanges(thenQs);
@@ -119,23 +119,26 @@ str setValues(list[AQuestion] qs) {
   for (AQuestion q <- qs) {
     switch (q) {
       case normal(str _, AId identifier, AType \type): {
-	    someStr += "\tdocument.getElementById(\"<identifier.src>\").value = document.getElementById(\"<identifier.src>\").<type2Val(\type)>;\n";
+	    someStr += "\tdocument.getElementById(\"<identifier.name>\").value = document.getElementById(\"<identifier.name>\").<type2Val(\type)>;\n";
 	  }
 	  case comp(str _, AId identifier, AType \type, AExpr e): {
-	    someStr += "\tdocument.getElementById(\"<identifier.src>\").value = <expr2Str(e, \type)>;";
+	    someStr += "\tdocument.getElementById(\"<identifier.name>\").innerHTML = <expr2Str(e, \type)>;";
 	  }
-	  case ifThenElse(AExpr guard, list[AQuestion] _, list[AQuestion] _): {
+	  case ifThenElse(AExpr guard, list[AQuestion] thenQs, list[AQuestion] elseQs): {
 	    someStr += "if (<expr2Str(guard, boolType())>){
 	    		   '\tdocument.getElementById(\"IF-<guard.src>\").style.display = \"\";
 	    		   '\tdocument.getElementById(\"ELSE-<guard.src>\").style.display = \"none\";
+	    		   '\t<setValues(thenQs)>
 	    		   '} else {
 	    		   '\tdocument.getElementById(\"IF-<guard.src>\").style.display = \"none\";
 	    		   '\tdocument.getElementById(\"ELSE-<guard.src>\").style.display = \"\";
-	    		   ";
+	    		   '\t<setValues(elseQs)>
+	    		   '}\n"  ;
 	  }
-	  case ifThen(AExpr guard, list[AQuestion] _): {
-	    someStr += "\tdocument.getElementById(\"IF-<guard.src>\").style.display = <expr2Str(guard, boolType())>?\"\":\"none\";\n";
+	  case ifThen(AExpr guard, list[AQuestion] thenQs): {
+	    someStr += "\tdocument.getElementById(\"IF-<guard.src>\").style.display = <expr2Str(guard, boolType())>?\"\":\"none\";\n" + setValues(thenQs);
 	  }
+	  default: someStr += "<q>";
 	}
   }
   return someStr;
@@ -162,7 +165,7 @@ str type2Def(AType \type) {
 str expr2Str(AExpr e, AType \type) {
   str someStr = "";
   switch (e) {
-    case ref(AId id): someStr += "document.getElementById(\"<id.src>\").<type2Val(\type)>";
+    case ref(id(str name)): someStr += "document.getElementById(\"<name>\").<type2Val(\type)>";
     case strLit(str name): someStr += name;
     case boolLit(bool b): someStr += "<b>";
     case intLit(int i): someStr += "<i>";
