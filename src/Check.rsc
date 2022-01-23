@@ -41,21 +41,26 @@ set[Message] check(AForm f) {
 set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   set[Message] msgs = {};
   rel[str n, Type t] seenNameType = {};
-  set[str] seenLabels = {};
+  rel[str IdName, str label] seenIdLabel = {};
+  set[str] seenLabel = {};
   
   for (<loc def, str name, str label, Type \type> <- tenv) {
   	if(name in seenNameType<0>) {
+  	  if(<name, label> notin seenIdLabel){
+  	    msgs += { warning("Duplicate question name but with different label", def) };
+  	  }
   	  if(<name,\type> notin seenNameType) {
   	    msgs += { error("Duplicate question name but with different type", def) };
   	  }
   	} else {
   	  seenNameType += {<name,\type>};
+  	  seenIdLabel += {<name, label>};
   	}
   	
-  	if(label in seenLabels) {
+  	if(label in seenLabel) {
   	  msgs += { warning("Duplicate label detected", def) };
   	} else {
-  	  seenLabels += {label};
+  	  seenLabel += {label};
   	}
   }
   
