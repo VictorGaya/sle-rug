@@ -66,7 +66,7 @@ list[AQuestion] flattenQs(list[AQuestion] qs, AExpr cond) {
      toRename += {u| <loc u, useOrDef> <-r.useDef};
    } else if (useOrDef in r.uses<0>){
      if (<useOrDef, loc d> <- r.useDef) {
-       toRename += {u| <loc u, d> <-r.useDef};
+       toRename += {u| <loc u, d> <-r.useDef} + {d};
      }
    } else {
      return f;
