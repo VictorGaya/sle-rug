@@ -44,9 +44,7 @@ syntax Type
   
 lexical Str = [\"] [A-Za-z0-9_\ ?():]+ [\"];
 
-lexical Int 
-  = [0]
-  | [0-9]+;
+lexical Int = [0-9]+;
 
 lexical Bool = "true" | "false";
 

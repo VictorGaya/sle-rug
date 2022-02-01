@@ -58,6 +58,9 @@ VEnv eval(AForm f, Input inp, VEnv venv) {
   }
 }
 
+/*
+  Evaluates every quesiton q in f
+*/
 VEnv evalOnce(AForm f, Input inp, VEnv venv) {
   for (/AQuestion q <- f) {
     venv = eval(q,inp,venv);
@@ -65,9 +68,10 @@ VEnv evalOnce(AForm f, Input inp, VEnv venv) {
   return venv; 
 }
 
+/*
+  Evaluates a single question (recursively for blocks)
+*/
 VEnv eval(AQuestion q, Input inp, VEnv venv) {
-  // evaluate conditions for branching,
-  // evaluate inp and computed questions to return updated VEnv
   switch(q) {
     case normal(str _, AId identifier, AType _): {
       if(identifier.name == inp.question) {
@@ -106,6 +110,9 @@ VEnv eval(AQuestion q, Input inp, VEnv venv) {
   return venv; 
 }
 
+/*
+  recursively evaluate every AExpr
+*/
 Value eval(AExpr e, VEnv venv) {
   switch (e) {
     case ref(id(str x)): return venv[x];

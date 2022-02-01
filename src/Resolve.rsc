@@ -25,6 +25,10 @@ alias RefGraph = tuple[
 RefGraph resolve(AForm f) = <us, ds, us o ds>
   when Use us := uses(f), Def ds := defs(f);
 
+/*
+  Gathers all uses from the AForm by deep matching all AExprs in f,
+  and saving the identifier information form each expression
+*/
 Use uses(AForm f) {
   Use uses = {};
   for (/AExpr expr := f) {
@@ -33,6 +37,10 @@ Use uses(AForm f) {
   return uses; 
 }
 
+/*
+  Gathers all defs from the AForm by deep matching all normal and computed questions,
+  and saving the identifier information for each question
+*/
 Def defs(AForm f) {
   Def defs = {};
   defs += {<identifier.name, identifier.src> | /normal(str _, AId identifier, AType _) := f};

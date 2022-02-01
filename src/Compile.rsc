@@ -37,6 +37,9 @@ HTML5Node form2html(AForm f) {
   '");
 }
 
+/*
+  Displays all questions as HTML
+*/
 str displayQs(list[AQuestion] qs) {
   
   str newStr = "";
@@ -89,6 +92,10 @@ str form2js(AForm f) {
   		 '} 
   		 '";
 }
+
+/*
+  Function that defines all onChange functions and sets all elements in the form to their default values.
+*/
 str onChanges(list[AQuestion] qs) {
   str someStr = "";
   for (AQuestion q <- qs) {
@@ -115,6 +122,11 @@ str onChanges(list[AQuestion] qs) {
   }
   return someStr;
 }
+
+/*
+  Function that recalculates all elements in the form.
+  This function is called every time something changes in the form.
+*/
 str setValues(list[AQuestion] qs) {
   str someStr = "";
   for (AQuestion q <- qs) {
@@ -147,6 +159,10 @@ str setValues(list[AQuestion] qs) {
   }
   return someStr;
 }
+
+/*
+  maps an AType to an HTML value type
+*/
 str type2Val(AType \type) {
   switch (\type) {
 	case intType(): return "valueAsNumber";
@@ -155,6 +171,10 @@ str type2Val(AType \type) {
   	default: return "";
   }
 }
+
+/*
+  maps an AType to a default string value
+*/
 str type2Def(AType \type) {
   switch(\type){
     case intType(): return "0";
@@ -163,6 +183,10 @@ str type2Def(AType \type) {
     default: return "";
   }
 }
+
+/*
+  converts an AExpr to a string in JavaScript code
+*/
 str expr2Str(AExpr e, AType \type) {
   str someStr = "";
   switch (e) {

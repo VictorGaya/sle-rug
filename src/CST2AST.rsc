@@ -27,6 +27,10 @@ AForm cst2ast(f: (Form)`form <Id identifier> { <Question* qs> }`) {
   return form("<identifier>", [cst2ast(q) | Question q <- qs], src=f@\loc);
 }
 
+/*
+  converts all questions to AQuestions using a switch statement to differentiate between question types
+  each AQuestion is also uniquely identifiable by its source location
+*/
 AQuestion cst2ast(Question q) {
   switch (q) {
   	case qst:(Question)`<Str s> <Id x> : <Type t>`: return normal("<s>", id("<x>", src=x@\loc), cst2ast(t), src=qst@\loc);

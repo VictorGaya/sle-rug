@@ -25,12 +25,15 @@ TEnv collect(AForm f) {
   return tenvs; 
 }
 
+/*
+  map the abstract AType to a Type
+*/
 Type getType(AType at) {
   switch(at) {
   	case intType(): return tint();
   	case boolType(): return tbool();
   	case strType(): return tstr();
-  	default: return tbool();
+  	default: return tunknown();
   }
 }
 
@@ -38,6 +41,12 @@ set[Message] check(AForm f) {
   return check(f,collect(f),resolve(f).useDef);
 }
 
+/*
+  check every type in the TypeEnvironment and keep track of:
+    - duplicate labels
+    - duplicate questions (+ different types/labels)
+  deep match on questions in f and check those as well
+*/
 set[Message] check(AForm f, TEnv tenv, UseDef useDef) {
   set[Message] msgs = {};
   rel[str n, Type t] seenNameType = {};
@@ -107,7 +116,7 @@ set[Message] getMessages(AExpr e, AExpr lhs, AExpr rhs, TEnv tenv, UseDef useDef
   set[Message] lhsMsgs = check(lhs,tenv,useDef);
   set[Message] rhsMsgs = check(rhs,tenv,useDef);
   if (lhsMsgs == {} && rhsMsgs == {}) {
-  	lhsMsgs += { error("Invalid type(s)", e.src) | typeOf(lhs,tenv,useDef) != \type || typeOf(rhs,tenv,useDef) != \type };
+  	lhsMsgs += { error(name + ": Invalid type(s)", e.src) | typeOf(lhs,tenv,useDef) != \type || typeOf(rhs,tenv,useDef) != \type };
   }
   return lhsMsgs + rhsMsgs;
 }
@@ -170,16 +179,17 @@ Type typeOf(AExpr e, TEnv tenv, UseDef useDef) {
     case div(AExpr _, AExpr _): return tint();
     case add(AExpr _, AExpr _): return tint();
     case sub(AExpr _, AExpr _): return tint();
-    case gr(AExpr _, AExpr _): return tint();
-    case less(AExpr _, AExpr _): return tint();
-    case leq(AExpr _, AExpr _): return tint();
-    case geq(AExpr _, AExpr _): return tint();
-    case eq(AExpr _, AExpr _): return tint();
-    case neq(AExpr _, AExpr _): return tint();
+    case gr(AExpr _, AExpr _): return tbool();
+    case less(AExpr _, AExpr _): return tbool();
+    case leq(AExpr _, AExpr _): return tbool();
+    case geq(AExpr _, AExpr _): return tbool();
+    case eq(AExpr _, AExpr _): return tbool();
+    case neq(AExpr _, AExpr _): return tbool();
     case and(AExpr _, AExpr _): return tbool();
     case or(AExpr _, AExpr _): return tbool();
+    default: return tunknown();
   }
-  return tunknown(); 
+  return tunknown();
 }
 
 /* 
